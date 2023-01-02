@@ -1,0 +1,7 @@
+SET(catch2_dir ${PROJECT_SOURCE_DIR}/../thirdparty/Catch2)
+add_subdirectory(${catch2_dir} catch2_build)
+file(GLOB test_srcs ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+add_executable(reflection_test ${test_srcs})
+target_link_libraries(reflection_test PRIVATE Catch2::Catch2WithMain)
+target_include_directories(reflection_test PRIVATE Catch2::)
+include(Catch)
