@@ -1,0 +1,7 @@
+project(logging VERSION 0.0.1)
+message(${PROJECT_NAME}-${PROJECT_VERSION})
+add_library(${PROJECT_NAME} INTERFACE)
+file(GLOB ZSL_LOGGING_HEADERS include/logging/*.hpp)
+target_sources(logging INTERFACE ${ZSL_LOGGING_HEADERS})
+target_include_directories(${PROJECT_NAME} INTERFACE ./include)
+# add_subdirectory(tests)

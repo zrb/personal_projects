@@ -1,0 +1,7 @@
+project(types VERSION 0.0.1)
+message(${PROJECT_NAME}-${PROJECT_VERSION})
+add_library(${PROJECT_NAME} INTERFACE)
+file(GLOB ZSL_TYPES_HEADERS include/types/*.hpp)
+target_sources(types INTERFACE ${ZSL_TYPES_HEADERS})
+target_include_directories(${PROJECT_NAME} INTERFACE ./include)
+add_subdirectory(tests)
