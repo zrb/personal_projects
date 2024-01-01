@@ -9,35 +9,21 @@ using zsl::logging::log;
 
 using namespace zsl::iouring;
 using namespace zsl::iouring::scheduler;
+using namespace zsl::iouring::coroutine;
 
 ring_t ring;
 scheduler_t sched{ring};
 int32_t count{};
 
-template < typename C >
-constexpr auto to_timespec(std::chrono::time_point < C > when)
-{
-    auto const nsecs_since_epoch = std::chrono::duration_cast < std::chrono::nanoseconds >(when.time_since_epoch());
-    auto const secs_since_epoch = std::chrono::duration_cast < std::chrono::seconds >(nsecs_since_epoch);
-    auto const nsecs = nsecs_since_epoch - secs_since_epoch;
-    return __kernel_timespec{ .tv_sec = secs_since_epoch.count(), .tv_nsec = nsecs.count() };
-}
-
-template < typename R, typename P >
-constexpr auto to_timespec(std::chrono::duration < R, P > interval)
-{
-    auto const nsecs_since_epoch = std::chrono::duration_cast < std::chrono::nanoseconds >(interval);
-    auto const secs_since_epoch = std::chrono::duration_cast < std::chrono::seconds >(nsecs_since_epoch);
-    auto const nsecs = nsecs_since_epoch - secs_since_epoch;
-    return __kernel_timespec{ .tv_sec = secs_since_epoch.count(), .tv_nsec = nsecs.count() };
-}
-
 TEST_CASE("iouring coroutine tests", "iouring coroutine tests")
 {
     SECTION("coroutine/timer/single")
     {
+        auto a = sched.create_timer(std::chrono::seconds(1));
+        auto b = a;
+        log("&a.e_ = {} &a.event_ = {} &b.e_ = {} &b.event_ = {} ", &a.e_, &a.event_, &b.e_, &b.event_);
         log("--------------------------------------------------------------------");
-        auto f = [] (scheduler_t & scheduler, int32_t & c) -> zsl::iouring::awaitable_t < void >
+        auto f = [] (scheduler_t & scheduler, int32_t & c) -> awaitable_t < void >
         {
             log("***** Begin *****");
             co_await scheduler.create_timer(std::chrono::seconds(1));
@@ -52,7 +38,7 @@ TEST_CASE("iouring coroutine tests", "iouring coroutine tests")
     SECTION("coroutine/timer/multiple")
     {
         log("--------------------------------------------------------------------");
-        auto f = [] (scheduler_t & scheduler, int32_t & c) -> zsl::iouring::awaitable_t < void >
+        auto f = [] (scheduler_t & scheduler, int32_t & c) -> awaitable_t < void >
         {
             for (auto i = 0; i < 5; ++i)
             {

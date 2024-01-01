@@ -4,7 +4,9 @@ add_library(${PROJECT_NAME} SHARED)
 
 target_sources(${PROJECT_NAME}
     PRIVATE
-        src/iouring.cpp
+        src/iouring_net.cpp
+        src/iouring_service.cpp
+        src/iouring_timer.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

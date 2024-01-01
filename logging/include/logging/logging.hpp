@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coroutine>
 #include <chrono>
 #include <filesystem>
 #include <format>

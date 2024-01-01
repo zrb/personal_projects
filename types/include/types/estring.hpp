@@ -80,7 +80,7 @@ template < uint8_t N >
 using fixed_estring_t = estring_t < N, N >;
 
 template < uint8_t MAX_LENGTH >
-using bounded_estring_t = estring_t < 0, MAX_LENGTH >;
+using bounded_estring_t = estring_t < 1, MAX_LENGTH >;
 
 template < typename tagType, uint8_t MIN_LENGTH, uint8_t MAX_LENGTH >
 struct typed_estring_t : estring_t < MIN_LENGTH, MAX_LENGTH >
@@ -93,6 +93,6 @@ template < typename tagType, uint8_t N >
 using typed_fixed_estring_t = typed_estring_t < tagType, N, N >;
 
 template < typename tagType, uint8_t MAX_LENGTH >
-using typed_bounded_estring_t = typed_estring_t < tagType, 0, MAX_LENGTH >;
+using typed_bounded_estring_t = typed_estring_t < tagType, 1, MAX_LENGTH >;
 
 }

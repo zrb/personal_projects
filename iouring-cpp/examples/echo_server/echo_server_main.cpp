@@ -6,6 +6,7 @@ namespace
 {
 
 using namespace zsl::iouring;
+using namespace zsl::iouring::coroutine;
 using namespace zsl::iouring::net;
 using namespace zsl::iouring::scheduler;
 
@@ -37,7 +38,7 @@ awaitable_t < void > handle_client(ring_t & ring, tcp_socket_t cs)
     logc(cs, "Running client...");
     auto lastMessageTime{highres_clock_t::now()};
     bool stopped{false};
-    auto a = disconnect_if_idle(ring, cs, lastMessageTime, stopped);
+    disconnect_if_idle(ring, cs, lastMessageTime, stopped);
     while (!stopped)
     {
         auto rr = co_await cs.recv(buffer);
@@ -51,8 +52,6 @@ awaitable_t < void > handle_client(ring_t & ring, tcp_socket_t cs)
         if (!sr.has_value())
             break;
     }
-    co_await a;
-    co_return;
 }
 
 awaitable_t < void > run_echo_server(ring_t & ring)

@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace zsl::iouring;
+using namespace zsl::iouring::coroutine;
 using namespace zsl::iouring::net;
 using namespace zsl::iouring::scheduler;
 
@@ -70,7 +71,7 @@ awaitable_t < void > handle_client(tcp_socket_t cs)
         auto data = to_string_view(buf, rr.value());
         logc(cs, "<<<<<<<server>>>>>>> Received... {} bytes containing {}", rr.value(), data);
 
-        socket_t::send_result_t sr = co_await cs.send(buf.data(), rr.value());
+        socket_t::send_result_t sr = co_await cs.send(data);
 
         if (!sr.has_value())
         {
