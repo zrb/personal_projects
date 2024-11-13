@@ -26,33 +26,35 @@ awaitable_t < void > handle_server(tcp_socket_t ss)
         auto && sr = co_await ss.send(sent);
         if (!sr.has_value())
         {
-            log("<<<<<<<client>>>>>>> Send failed on...  {}", sent);
+            logc(ss, "<<<<<<<client>>>>>>> Send failed on...  {}", sent);
              break;
         }
-        log("<<<<<<<client>>>>>>> Sent...  {}", sr.value());
+        logc(ss, "<<<<<<<client>>>>>>> Sent...  {} bytes containing {}", sr.value(), sent);
+        logc(ss, "<<<<<<<client>>>>>>> Waiting for server to echo it");
         auto && rr = co_await ss.recv(buffer);
-        log("<<<<<<<client>>>>>>> Received something...  {}");
+        logc(ss, "<<<<<<<client>>>>>>> Received something...  {}");
         if (!rr.has_value())
         {
-            log("<<<<<<<client>>>>>>> Receive failed when expecting...  {}", sent);
+            logc(ss, "<<<<<<<client>>>>>>> Receive failed when expecting...  {}", sent);
             break;
         }
         auto received{to_string_view(buffer, rr.value())};
-        log("<<<<<<<client>>>>>>> Received...  {}", received);
+        logc(ss, "<<<<<<<client>>>>>>> Received...  {}", received);
         if (sent != received)
             break;
     }
+    logc(ss, "<<<<<<<client>>>>>>> Stopping...");
 }
-awaitable_t < void > run_client(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port, bool & stopped)
+
+awaitable_t < void > run_client(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port)
 {
-    log("<<<<<<<client>>>>>>> Creating...  {}");
+    log("<<<<<<<client>>>>>>> Creating...");
     auto ss = tcp_socket_t(ring);
-    log("<<<<<<<client>>>>>>> Connecting...  {}");
+    log("<<<<<<<client>>>>>>> Connecting...");
     auto cs = co_await ss.connect(ip, port);
     if (cs == socket_t::connect_status_t::SUCCEEDED)
-        handle_server(std::move(ss));
+        co_await handle_server(std::move(ss));
     log("<<<<<<<client>>>>>>> Done with client...");
-    stopped = true;
 }
 
 awaitable_t < void > handle_client(tcp_socket_t cs)
@@ -84,33 +86,33 @@ awaitable_t < void > handle_client(tcp_socket_t cs)
     co_return;
 }
 
-awaitable_t < void > run_server(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port, bool & stopped)
+awaitable_t < void > run_server(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port)
 {
     auto s = tcp_server(ring, ip, port);
-    while (!stopped)
+    zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accepting...");
+    auto && ar = co_await s.acceptor().accept();
+    zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept completed...");
+    if (ar.has_value())
     {
-        zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accepting...");
-        auto && ar = co_await s.acceptor().accept();
-        zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept completed...");
-        if (ar.has_value())
-        {
-            auto cs = std::move(ar.value());
-            zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept succeeded...  got client socket... {}", cs);
-            handle_client(std::move(cs));
-        }
-        else
-        {
-            zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept failed... {}", ar.error());
-        }
+        auto cs = std::move(ar.value());
+        zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept succeeded...  got client socket... {}", cs);
+        co_await handle_client(std::move(cs));
+    }
+    else
+    {
+        zsl::logging::logc(s, "<<<<<<<server>>>>>>> Accept failed... {}", ar.error());
     }
 }
 
-void test_run_server_and_client(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port, bool & stopped)
+awaitable_t < void > test_run_server_and_client(ring_t & ring, ipaddressv4_t const & ip, ipport_t const & port, bool & stopped)
 {
     log("-------------------------------------------");
-    run_server(ring, ip, port, stopped);
+    auto s = run_server(ring, ip, port);
     log("-------------------------------------------");
-    run_client(ring, ip, port, stopped);
+    auto c = run_client(ring, ip, port);
+    co_await c;
+    co_await s;
+    stopped = true;
 }
 
 TEST_CASE("iouring network tests", "iouring network tests")
@@ -122,11 +124,7 @@ TEST_CASE("iouring network tests", "iouring network tests")
         bool stopped{false};
         ipaddressv4_t ip{IPADDRV4_LOOPBACK};
         ipport_t port{56789};
-        //  test_run_server_and_client(ring, ip, port, stopped);
-        log("-------------------------------------------");
-        run_server(ring, ip, port, stopped);
-        log("-------------------------------------------");
-        run_client(ring, ip, port, stopped);
+        test_run_server_and_client(ring, ip, port, stopped);
         ring.run(stopped);
     }
 }

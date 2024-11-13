@@ -9,7 +9,7 @@ static_assert(string_literal_t{"hello"}.length() == 5);
 
 }
 
-TEST_CASE("types tests", "[types_tests]")
+TEST_CASE("string literal tests", "[types_tests/string_literals]")
 {
     SECTION("basics")
     {

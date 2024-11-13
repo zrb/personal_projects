@@ -1,12 +1,12 @@
 cmake_policy(SET CMP0048 NEW)
 
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
-set (CMAKE_CXX_STANDARD 23)
-set (CMAKE_CXX_COMPILER g++-13)
-set (CMAKE_C_COMPILER gcc-13)
+set (CMAKE_CXX_STANDARD 26)
+set (CMAKE_CXX_COMPILER g++-14)
+set (CMAKE_C_COMPILER gcc-14)
 # set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra")
-set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -fsanitize=address")
+set (CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -fsanitize=address -std=gnu++26")
 set (CMAKE_LINK_FLAGS "-lasan")
 # set (CMAKE_CXX_COMPILER clang++-17)
 # set (CMAKE_C_COMPILER clang-17)

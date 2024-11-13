@@ -52,7 +52,7 @@ struct impl_t
     auto prepare(ring_t::event_t & e, F && f, Args &&... args)
     {
         auto * sqe = io_uring_get_sqe(&data_.ring_);
-        log("Preparing... ring = {} sqe = {}", &ring_, sqe);
+        //  log("Preparing... ring = {} sqe = {}", &ring_, sqe);
         std::forward < F >(f)(sqe, std::forward < Args >(args)...);
         io_uring_sqe_set_data(sqe, &e);
     }
@@ -65,7 +65,7 @@ struct impl_t
     
     void wait_for_events(size_t const count, std::chrono::nanoseconds const wait_timeout)
     {
-        logc(&ring_, "Waiting for events...");
+        //  logc(&ring_, "Waiting for events...");
         io_uring_cqe * cqe = nullptr;
         auto ts = zsl::iouring::utils::time::to_timespec(wait_timeout);
         if (auto const r = io_uring_wait_cqes(&data_.ring_, &cqe, count, &ts, nullptr); r != 0) [[unlikely]]
@@ -73,25 +73,25 @@ struct impl_t
             switch (r)
             {
             case -ETIME:
-                logc(&ring_, "Wait timed out...");
+                //  logc(&ring_, "Wait timed out...");
                 return;
             default:
                 throw std::system_error(r, std::generic_category(), "io_uring_wait_cqes");
             }
         }
 
-        logc(&ring_, "Wait over...");
+        //  logc(&ring_, "Wait over...");
         uint32_t head{0};
         uint32_t completions{0};
         io_uring_for_each_cqe(&data_.ring_, head, cqe)
         {
             if (auto * p = io_uring_cqe_get_data(cqe); p)
             {
-                log("Event... event = {}", p);
+                //  log("Event... event = {}", p);
                 if (p)
                 {
                     auto & e = *reinterpret_cast < ring_t::event_t * >(p);
-                    log("Calling handler... handler_ = {} event = {}", e.handler_, &e);
+                    //  log("Calling handler... handler_ = {} event = {}", e.handler_, &e);
                     e.handler_(cqe, e);
                 }
             }

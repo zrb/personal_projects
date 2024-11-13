@@ -1,0 +1,1 @@
+sed -uE "s/[a-zA-Z0-9_{}]+:://g; s/with //g"

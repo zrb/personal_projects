@@ -14,7 +14,7 @@ struct fmt_t
     char const * const str_;
     std::source_location const loc_;
 
-    fmt_t(char const * str, std::source_location const loc = std::source_location::current()) : str_{str}, loc_{loc}
+    consteval fmt_t(char const * str, std::source_location const loc = std::source_location::current()) : str_{str}, loc_{loc}
     {
     }
 };
@@ -40,7 +40,7 @@ decltype(auto) prettify(Arg && v)
         return (void const *)v;
     else
     if constexpr (is_coroutine_handle_v < A >)
-        return v.address();
+        return prettify(v.address());
     else
         return v;
 };
@@ -51,9 +51,9 @@ inline auto log(fmt_t const & fmt, Args &&... args)
     auto & buffer = log_buffer();
 
     auto const & [str, loc] = fmt;
-    std::vformat_to(
+    std::format_to(
         std::format_to(std::back_inserter(buffer), "[{}][{}:{}][{}] - ", std::chrono::high_resolution_clock::now(), std::filesystem::path(loc.file_name()).filename().c_str(), loc.line(), loc.function_name()),
-        str, std::make_format_args(prettify(std::forward < Args >(args))...)
+        std::runtime_format(str), prettify(std::forward < Args >(args))...
     );
 
     std::clog << buffer << std::endl;
@@ -64,9 +64,9 @@ inline auto logc(Context && ctx, fmt_t const & fmt, Args &&... args)
 {
     auto const & [str, loc] = fmt;
     auto & buffer = log_buffer();
-    std::vformat_to(
+    std::format_to(
         std::format_to(std::back_inserter(buffer), "[{}][{}:{}][{}] - [{}]: ", std::chrono::high_resolution_clock::now(), std::filesystem::path(loc.file_name()).filename().c_str(), loc.line(), loc.function_name(), prettify(ctx)),
-        str, std::make_format_args(prettify(std::forward < Args >(args))...)
+        std::runtime_format(str), prettify(std::forward < Args >(args))...
     );
 
     std::clog << buffer << std::endl;
