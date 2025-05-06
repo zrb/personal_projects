@@ -2,7 +2,6 @@
 
 #include "iouring_impl.hpp"
 
-#include <types/bitset.hpp>
 #include <logging/logging.hpp>
 
 #include <cstdint>
@@ -13,6 +12,8 @@
 #include <iostream>
 #include <utility>
 #include <stdexcept>
+
+import zsl.types.bitset;
 
 namespace
 {

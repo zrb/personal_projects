@@ -1,7 +1,6 @@
 #include "iouring_net.hpp"
 #include "iouring_impl.hpp"
 
-#include <types/bitset.hpp>
 #include <logging/logging.hpp>
 
 #include <cstdint>
@@ -16,6 +15,8 @@
 #include <liburing/io_uring.h>
 #include <liburing.h>
 #include <unistd.h>
+
+import zsl.types.bitset;
 
 namespace
 {

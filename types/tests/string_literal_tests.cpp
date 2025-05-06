@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-#include <types/string_literal.hpp>
+import zsl.types.string_literal;
 
 namespace zsl::types::tests
 {

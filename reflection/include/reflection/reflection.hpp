@@ -5,8 +5,8 @@
 #include <type_traits>
 #include <bit>
 
-#include <types/string_literal.hpp>
-#include <types/estring.hpp>
+import zsl.types.string_literal;
+import zsl.types.estring;
 
 namespace zsl::reflection
 {

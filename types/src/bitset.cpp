@@ -1,10 +1,12 @@
-#pragma once
+module;
 
 #include <array>
 #include <bit>
 #include <ranges>
 
-namespace zsl::types
+export module zsl.types.bitset;
+
+export namespace zsl::types
 {
 
 template < size_t N >

@@ -1,12 +1,13 @@
-#pragma once
+module;
 
 #include <cstdint>
-#include <algorithm>
 #include <array>
 #include <ranges>
 #include <stdexcept>
 
-namespace zsl::types
+export module zsl.types.estring;
+
+export namespace zsl::types
 {
 
 //  length excludes null terminator

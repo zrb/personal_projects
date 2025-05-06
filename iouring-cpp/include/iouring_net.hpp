@@ -1,6 +1,5 @@
 #pragma once
 
-#include "iouring_net.hpp"
 #include "iouring_coroutine.hpp"
 
 #include <ranges>

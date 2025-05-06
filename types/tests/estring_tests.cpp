@@ -1,8 +1,8 @@
 #include <catch2/catch_all.hpp>
 
-#include <types/estring.hpp>
-
 #include <iostream>
+
+import zsl.types.estring;
 
 namespace zsl::types::tests
 {

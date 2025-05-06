@@ -1,7 +1,11 @@
+module;
+
 #include <cstdint>
 #include <string_view>
 
-namespace zsl::types
+export module zsl.types.string_literal;
+
+export namespace zsl::types
 {
 
 template < typename Char >

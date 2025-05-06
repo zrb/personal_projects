@@ -14,8 +14,9 @@
 #include <linux/time_types.h>
 #include <arpa/inet.h>
 
-#include <types/estring.hpp>
 #include <logging/logging.hpp>
+
+import zsl.types.estring;
 
 struct io_uring_cqe;
 
