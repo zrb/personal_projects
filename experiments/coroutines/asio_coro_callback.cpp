@@ -1,3 +1,5 @@
+#include <boost/asio/io_context.hpp>
+#include <ctime>
 #include <thread>
 #include <boost/asio.hpp>
 #include <coroutine>
@@ -15,6 +17,7 @@
 #include <source_location>
 
 #include <boost/asio/post.hpp>
+#include <unistd.h>
 
 namespace asio = boost::asio;
 
@@ -212,7 +215,7 @@ struct ASIOPostAwaitable
     {
         asio::post(
           io_
-        , [this, h, f = std::move(func_)]() mutable
+        , [this, h, f = std::move(func_)] mutable
           {
               *value_ = f();
               h.resume();
@@ -222,7 +225,8 @@ struct ASIOPostAwaitable
 
     T await_resume() const noexcept
     {
-        return std::move(*value_);
+        if constexpr (!std::is_same_v < T, void >)
+            return std::move(*value_);
     }
 };
 
@@ -242,7 +246,7 @@ struct ASIOPostAwaitable < void >
     {
         asio::post(
           io_
-        , [this, h, f{func_}]() mutable
+        , [this, h, f{func_}] mutable
           {
               f();
               h.resume();
@@ -267,11 +271,17 @@ struct std::coroutine_traits < ASIOPostAwaitable < T >, Args... >
     using promise_type = AwaitableTask < T >;
 };
 
+template < typename F >
+auto post(asio::io_context& io, F && f)
+{
+    return ASIOPostAwaitable < std::invoke_result_t < F > >{io, std::move(f)};
+}
+
 auto int_coroutine(asio::io_context& io)
 {
     std::cout << "int_coroutine started" << std::endl;
-    return ASIOPostAwaitable < int >{io, []{
-        std::cout << "int_coroutine callback computing value" << std::endl;
+    return ASIOPostAwaitable < int >{io, [] {
+        std::cout << "int_coroutine callback computing value    " << std::endl;
         return 123;
     }};
 }
@@ -293,25 +303,58 @@ auto void_coroutine(asio::io_context& io)
     }};
 }
 
+struct Cache
+{
+    asio::io_context & io_;
+
+    template < typename F >
+    auto fetch(int key, F && f)
+    {
+        asio::post(io_, [f = std::forward<F>(f), key, this] {
+            usleep(3000000);
+            std::cout << "Cache fetch for key: " << key << std::endl;
+            f(key, "42");
+        });
+    }
+};
+
 Awaitable < void > run_coroutines(asio::io_context& io)
 {
+    [[maybe_unused]] auto x = co_await post(io,
+                    [] () {
+                        std::cout << "Post callback executed" << std::endl;
+                        return 42; // Example value
+                    });
     auto t1 = co_await int_coroutine(io);
     auto t2 = co_await string_coroutine(io);
     co_await void_coroutine(io);
 
-    // Wait for coroutines to finish (they will finish after io_context runs all handlers)
-    // io.run();
-
     std::cout << "int_coroutine returned: " << t1 << "" << std::endl;
     std::cout << "string_coroutine returned: " << t2 << "" << std::endl;
     std::cout << "void_coroutine returned" << std::endl;
+
+    Cache c{io};
+    co_await post(io, [&c] { c.fetch(42, [](int key, std::string value) {
+        std::cout << "Cache fetch completed for key: " << key << ", value: " << value << std::endl;
+    }); });
     co_return;
+}
+
+void run_timer(asio::io_context & io)
+{
+    asio::steady_timer timer(io, std::chrono::seconds(1));
+    timer.async_wait([](const std::error_code& ec) {
+        if (!ec) {
+            std::cout << "Timer expired!" << std::endl;
+        } else {
+            std::cerr << "Timer error: " << ec.message() << std::endl;
+        }
+    });
 }
 
 int main()
 {
     asio::io_context io;
-
     // Run io_context in a separate thread
     std::thread io_thread([&io]{ io.run(); });
     asio::post(io, [&io] () { run_coroutines(io); });
