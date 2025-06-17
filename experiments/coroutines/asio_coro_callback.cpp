@@ -1,14 +1,19 @@
+#include <boost/asio/basic_stream_socket.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/completion_condition.hpp>
 #include <boost/asio/io_context.hpp>
-#include <ctime>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/system/detail/error_code.hpp>
+#include <ranges>
+#include <utility>
 #include <thread>
 #include <boost/asio.hpp>
 #include <coroutine>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <type_traits>
 #include <functional>
-#include <print>
 #include <expected>
 #include <coroutine>
 #include <chrono>
@@ -306,15 +311,35 @@ auto void_coroutine(asio::io_context& io)
 struct Cache
 {
     asio::io_context & io_;
+    char buf[4] = {};
 
     template < typename F >
     auto fetch(int key, F && f)
     {
-        asio::post(io_, [f = std::forward<F>(f), key, this] {
-            usleep(3000000);
-            std::cout << "Cache fetch for key: " << key << std::endl;
-            f(key, "42");
-        });
+        try
+        {
+            using namespace asio::ip;
+            tcp::socket socket(io_);
+            socket.connect(tcp::endpoint(address_v4::loopback(), 56789));
+            if (auto const & received = asio::read(socket, asio::buffer(buf, sizeof(buf)), asio::transfer_exactly(sizeof(int32_t))))
+            {
+                if (received == sizeof(int32_t))
+                {
+                    std::cout << "Cache fetch for key: " << key << std::endl;
+                    f(key, std::to_string(*reinterpret_cast<int32_t const *>(buf)));
+                }
+                else
+                {
+                    // log("Got {} error & {} bytes", ec.message(), received);
+                    log("Got {} bytes", received);
+                    f(key, std::nullopt);
+                }
+            }
+        }
+        catch (boost::system::system_error const & e)
+        {
+            f(key, std::nullopt);
+        }
     }
 };
 
@@ -334,9 +359,10 @@ Awaitable < void > run_coroutines(asio::io_context& io)
     std::cout << "void_coroutine returned" << std::endl;
 
     Cache c{io};
-    co_await post(io, [&c] { c.fetch(42, [](int key, std::string value) {
-        std::cout << "Cache fetch completed for key: " << key << ", value: " << value << std::endl;
+    co_await post(io, [&c] { c.fetch(42, [](int key, std::optional < std::string > value) {
+        std::cout << "Cache fetch completed for key: " << key << ", value: " << value.value_or("<null>") << std::endl;
     }); });
+    log("Cache fetch co_await over");
     co_return;
 }
 
